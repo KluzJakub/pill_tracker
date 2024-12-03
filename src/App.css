@@ -1,0 +1,124 @@
+/* Globální styl pro pozadí a layout */
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #FFB74D, #F57C00);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Kontejner */
+.main-container, .login-container {
+    max-width: 450px;
+    width: 100%;
+    margin: auto;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+    background: #ffffff;
+    text-align: center;
+}
+
+/* Titulky */
+.title-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    color: #FF7043;
+}
+
+h1 {
+    font-size: 36px;
+    font-weight: bold;
+    color: #E64A19;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #FF7043;
+}
+
+/* Vstupy */
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+/* Tlačítka */
+button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button.btn-orange {
+    background-color: #FF7043;
+    color: white;
+}
+
+button.btn-orange:hover {
+    background-color: #E64A19;
+}
+
+button.btn-outline-orange {
+    background-color: white;
+    color: #FF7043;
+    border: 2px solid #FF7043;
+}
+
+button.btn-outline-orange:hover {
+    background-color: #FF7043;
+    color: white;
+}
+
+/* Seznam pilulek */
+.pill-list {
+    margin-top: 20px;
+}
+
+.pill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #FFF3E0;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pill-item button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+/* Výstrahy */
+.alert {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #DFF0D8;
+    color: #3C763D;
+}
+
+.alert-danger {
+    background-color: #F2DEDE;
+    color: #A94442;
+}

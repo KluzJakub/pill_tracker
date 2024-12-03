@@ -1,103 +1,95 @@
-const { PrismaClient } = require('@prisma/client');
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-const prisma = new PrismaClient();
+// Inicializace Firebase
+const serviceAccount = require('./serviceAccountKey.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
+// Inicializace SQLite
+const db = new sqlite3.Database(path.resolve(__dirname, './pilltracker.db'), (err) => {
+    if (err) {
+        console.error('Could not connect to SQLite database', err);
+    } else {
+        console.log('Connected to SQLite database');
+    }
+});
+
+// Vytvoření tabulky pilulek (pokud neexistuje)
+db.run(
+    `CREATE TABLE IF NOT EXISTS pills (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        time TEXT NOT NULL
+    )`
+);
+
 const app = express();
-const SECRET_KEY = 'your_secret_key'; // Nahraďte svým tajným klíčem
+const PORT = 3001;
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://pilltracker.web.app'],
+    methods: ['GET', 'POST', 'DELETE'],
+    credentials: true,
+}));
 app.use(express.json());
 
-// Načtení všech pilulek (chráněný endpoint)
-app.get('/pills', authenticate, async (req, res) => {
-    const pills = await prisma.pill.findMany();
-    res.json(pills);
-});
-
-// Přidání nové pilulky (chráněný endpoint)
-app.post('/pills', authenticate, async (req, res) => {
-    const { name, time } = req.body;
-    const newPill = await prisma.pill.create({
-        data: { name, time },
-    });
-    res.json(newPill);
-});
-
-// Smazání pilulky (chráněný endpoint)
-app.delete('/pills/:id', authenticate, async (req, res) => {
-    const { id } = req.params;
-    await prisma.pill.delete({
-        where: { id: parseInt(id) },
-    });
-    res.json({ message: 'Pill deleted' });
-});
-
-// Registrace uživatele
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-
-    const existingUser = await prisma.user.findUnique({
-        where: { username },
-    });
-    if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await prisma.user.create({
-        data: { username, password: hashedPassword },
-    });
-
-    res.json({ message: 'User registered', user: newUser });
-});
-
-// Přihlášení uživatele
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    const user = await prisma.user.findUnique({
-        where: { username },
-    });
-
-    if (!user) {
-        return res.status(400).json({ message: 'User not found' });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ message: 'Invalid password' });
-    }
-
-    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, {
-        expiresIn: '1h',
-    });
-
-    res.json({ message: 'Login successful', token });
-});
-
-// Middleware pro ověření tokenu
-function authenticate(req, res, next) {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
+// Middleware pro ověření Firebase tokenu
+const verifyFirebaseToken = async (req, res, next) => {
+    const idToken = req.headers.authorization?.split('Bearer ')[1];
+    if (!idToken) return res.status(401).json({ message: 'Unauthorized - No token provided' });
 
     try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded;
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        req.user = decodedToken;
         next();
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid token' });
+    } catch (error) {
+        res.status(401).json({ message: 'Unauthorized - Invalid token' });
     }
-}
+};
 
-// Spuštění serveru
-app.listen(3001, () => {
-    console.log('Server running on http://localhost:3001');
+// Načíst všechny pilulky
+app.get('/api/pills', verifyFirebaseToken, (req, res) => {
+    db.all('SELECT * FROM pills', [], (err, rows) => {
+        if (err) {
+            console.error('Failed to fetch pills:', err);
+            res.status(500).json({ message: 'Failed to fetch pills' });
+        } else {
+            res.json({ pills: rows });
+        }
+    });
+});
+
+// Přidat novou pilulku
+app.post('/api/pills', verifyFirebaseToken, (req, res) => {
+    const { name, time } = req.body;
+    db.run('INSERT INTO pills (name, time) VALUES (?, ?)', [name, time], function (err) {
+        if (err) {
+            console.error('Failed to add pill:', err);
+            res.status(500).json({ message: 'Failed to add pill' });
+        } else {
+            res.status(201).json({ id: this.lastID, name, time });
+        }
+    });
+});
+
+// Smazat pilulku
+app.delete('/api/pills/:id', verifyFirebaseToken, (req, res) => {
+    const { id } = req.params;
+    db.run('DELETE FROM pills WHERE id = ?', [id], (err) => {
+        if (err) {
+            console.error('Failed to delete pill:', err);
+            res.status(500).json({ message: 'Failed to delete pill' });
+        } else {
+            res.status(204).send();
+        }
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });

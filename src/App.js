@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from './firebase';
 import PillList from './PillList';
+import './App.css';
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [token, setToken] = useState('');
     const [pills, setPills] = useState([]);
@@ -21,23 +24,29 @@ function App() {
         }
     }, []);
 
-    const login = () => {
-        fetch('http://localhost:3001/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.token) {
-                    setToken(data.token);
-                    setIsLoggedIn(true);
-                    localStorage.setItem('authToken', data.token);
-                    fetchPills(data.token);
-                } else {
-                    alert(data.message || 'Login failed');
-                }
-            });
+    const login = async () => {
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+            setToken(idToken);
+            setIsLoggedIn(true);
+            localStorage.setItem('authToken', idToken);
+            fetchPills(idToken);
+        } catch (error) {
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    setErrorMessage('No user found with this email.');
+                    break;
+                case 'auth/wrong-password':
+                    setErrorMessage('Incorrect password.');
+                    break;
+                case 'auth/invalid-email':
+                    setErrorMessage('Invalid email address.');
+                    break;
+                default:
+                    setErrorMessage('Login failed. Please try again.');
+            }
+        }
     };
 
     const logout = () => {
@@ -47,84 +56,84 @@ function App() {
         localStorage.removeItem('authToken');
     };
 
-    const fetchPills = (authToken) => {
-        fetch('http://localhost:3001/pills', {
-            headers: { Authorization: `Bearer ${authToken}` },
-        })
-            .then((response) => response.json())
-            .then((data) => setPills(data));
+    const fetchPills = async (authToken) => {
+        try {
+            const response = await fetch('http://localhost:3001/api/pills', {
+                headers: { Authorization: `Bearer ${authToken}` },
+            });
+            const data = await response.json();
+            setPills(data.pills || []);
+        } catch {
+            setErrorMessage('Failed to fetch pills.');
+        }
     };
 
-    const addPill = () => {
+    const addPill = async () => {
         if (!pillName || !pillTime) {
             setErrorMessage('Please enter both pill name and time.');
             return;
         }
 
-        fetch('http://localhost:3001/pills', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ name: pillName, time: pillTime }),
-        })
-            .then((response) => response.json())
-            .then((newPill) => {
-                setPills([...pills, newPill]);
-                setAlertMessage('Pill added successfully!');
-                setTimeout(() => setAlertMessage(''), 3000);
+        try {
+            const response = await fetch('http://localhost:3001/api/pills', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ name: pillName, time: pillTime }),
             });
+            const newPill = await response.json();
+            setPills([...pills, newPill]);
+            setAlertMessage('Pill added successfully!');
+            setTimeout(() => setAlertMessage(''), 3000);
+        } catch {
+            setErrorMessage('Failed to add pill.');
+        }
 
         setPillName('');
         setPillTime('');
         setErrorMessage('');
     };
 
-    const deletePill = (id) => {
-        fetch(`http://localhost:3001/pills/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        }).then(() => {
+    const deletePill = async (id) => {
+        try {
+            await fetch(`http://localhost:3001/api/pills/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            });
             setPills(pills.filter((pill) => pill.id !== id));
             setAlertMessage('Pill deleted successfully!');
             setTimeout(() => setAlertMessage(''), 3000);
-        });
+        } catch {
+            setErrorMessage('Failed to delete pill.');
+        }
     };
 
     if (!isLoggedIn) {
         return (
             <div className="login-container">
                 <div className="login-card">
-                    <div className="login-icon">
-                        🔒
-                    </div>
-                    <h2 className="text-center mb-4">Login</h2>
-                    <div className="form-group mb-3">
-                        <label htmlFor="username">Username</label>
-                        <input
-                            id="username"
-                            type="text"
-                            className="form-control"
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </div>
-                    <div className="form-group mb-3">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            className="form-control"
-                            placeholder="Enter password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    <button className="btn btn-orange w-100" onClick={login}>
+                    <div className="login-icon">🔒</div>
+                    <h2>Login</h2>
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="form-control"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="form-control"
+                    />
+                    <button onClick={login} className="btn btn-orange w-100">
                         Login
                     </button>
+                    {errorMessage && <p className="error">{errorMessage}</p>}
                 </div>
             </div>
         );
@@ -132,58 +141,35 @@ function App() {
 
     return (
         <div className="main-container">
-            <div className="tracker-title">
-                <div className="title-icon">💊</div>
-                <h1 className="tracker-name">Pill Tracker</h1>
-                <p className="tracker-subtitle">Your Daily Pill Reminder</p>
+            <div className="title-icon">💊</div>
+            <h1>Pill Tracker</h1>
+            <button onClick={logout} className="btn btn-outline-orange">Logout</button>
+            {alertMessage && <div className="alert alert-success">{alertMessage}</div>}
+            {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+
+            <div className="pill-form">
+                <h2>Add New Pill</h2>
+                <input
+                    type="text"
+                    placeholder="Pill Name"
+                    value={pillName}
+                    onChange={(e) => setPillName(e.target.value)}
+                    className="form-control"
+                />
+                <input
+                    type="time"
+                    value={pillTime}
+                    onChange={(e) => setPillTime(e.target.value)}
+                    className="form-control"
+                />
+                <button onClick={addPill} className="btn btn-orange">
+                    Add Pill
+                </button>
             </div>
-            <div className="row justify-content-center">
-                <div className="col-md-8">
-                    <div className="d-flex justify-content-end mb-4">
-                        <button className="btn btn-outline-orange" onClick={logout}>
-                            Logout
-                        </button>
-                    </div>
-                    {alertMessage && (
-                        <div className="alert alert-success text-center" role="alert">
-                            {alertMessage}
-                        </div>
-                    )}
-                    {errorMessage && (
-                        <div className="alert alert-danger text-center" role="alert">
-                            {errorMessage}
-                        </div>
-                    )}
-                    <div className="card shadow p-4 mb-4 form-card">
-                        <h2 className="text-center mb-3">Add a New Pill</h2>
-                        <div className="form-group mb-3">
-                            <label htmlFor="pillName">Pill Name</label>
-                            <input
-                                id="pillName"
-                                type="text"
-                                className="form-control"
-                                placeholder="Enter pill name"
-                                value={pillName}
-                                onChange={(e) => setPillName(e.target.value)}
-                            />
-                        </div>
-                        <div className="form-group mb-3">
-                            <label htmlFor="pillTime">Time</label>
-                            <input
-                                id="pillTime"
-                                type="time"
-                                className="form-control"
-                                value={pillTime}
-                                onChange={(e) => setPillTime(e.target.value)}
-                            />
-                        </div>
-                        <button className="btn btn-orange w-100" onClick={addPill}>
-                            Add Pill
-                        </button>
-                    </div>
-                    <h3 className="text-center mb-3">Your Pills</h3>
-                    <PillList pills={pills} onDelete={deletePill} />
-                </div>
+
+            <div className="pill-list">
+                <h2>Your Pills</h2>
+                <PillList pills={pills} onDelete={deletePill} />
             </div>
         </div>
     );
