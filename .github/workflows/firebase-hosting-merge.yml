@@ -11,10 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+
+      - name: Install dependencies and build
+        run: npm ci && npm run build
+
+      - name: Create serviceAccountKey.json
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PILLTRACKER_1F471 }}' > ./backend/serviceAccountKey.json
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PILLTRACKER_1F471 }}
           channelId: live
           projectId: pilltracker-1f471
+
+      - name: Cleanup serviceAccountKey.json
+        run: rm -f ./backend/serviceAccountKey.json
