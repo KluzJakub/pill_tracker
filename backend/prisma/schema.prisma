@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./pilltracker.db"
+  provider = "postgresql"
+  url      = "https://czjgnbvspgolxlyibzda.supabase.co"
 }
 
 model User {

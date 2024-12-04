@@ -1,8 +1,7 @@
-// Import Firebase funkcí
 import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// Vaše Firebase konfigurace
 const firebaseConfig = {
     apiKey: "AIzaSyDXFRXNK-ll-S7RAwWFrtp8SGKcQUiDEGY",
     authDomain: "pilltracker-1f471.firebaseapp.com",
@@ -12,8 +11,7 @@ const firebaseConfig = {
     appId: "1:783786517556:web:06b4cee0aad26aab801661",
 };
 
-// Inicializace Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export Firebase Auth
+export const db = getFirestore(app);
 export const auth = getAuth(app);

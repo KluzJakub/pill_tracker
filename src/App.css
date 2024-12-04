@@ -1,90 +1,56 @@
-/* Globální styl pro pozadí a layout */
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #FFB74D, #F57C00);
+    background: linear-gradient(120deg, #fff5e6, #ffe0cc);
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    color: #333;
 }
 
-/* Kontejner */
-.main-container, .login-container {
-    max-width: 450px;
-    width: 100%;
-    margin: auto;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
-    background: #ffffff;
+.login-container, .main-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+    background: #fff;
+}
+
+h1, h2 {
     text-align: center;
+    color: #ff6f00;
 }
 
-/* Titulky */
-.title-icon {
-    font-size: 60px;
-    margin-bottom: 20px;
-    color: #FF7043;
-}
-
-h1 {
-    font-size: 36px;
-    font-weight: bold;
-    color: #E64A19;
-    margin-bottom: 10px;
-}
-
-h2 {
-    font-size: 24px;
-    margin-bottom: 15px;
-    color: #FF7043;
-}
-
-/* Vstupy */
 input {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
     border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
 }
 
-/* Tlačítka */
 button {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background: #ff6f00;
+    color: white;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 16px;
 }
 
-button.btn-orange {
-    background-color: #FF7043;
-    color: white;
+button:hover {
+    background: #e65c00;
 }
 
-button.btn-orange:hover {
-    background-color: #E64A19;
+.alert {
+    margin: 15px 0;
+    text-align: center;
+    font-weight: bold;
 }
 
-button.btn-outline-orange {
-    background-color: white;
-    color: #FF7043;
-    border: 2px solid #FF7043;
-}
-
-button.btn-outline-orange:hover {
-    background-color: #FF7043;
-    color: white;
-}
-
-/* Seznam pilulek */
-.pill-list {
+.pill-form, .pill-list {
     margin-top: 20px;
 }
 
@@ -92,33 +58,44 @@ button.btn-outline-orange:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
     margin-bottom: 10px;
-    border-radius: 8px;
-    background-color: #FFF3E0;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    background: #ffe0cc;
+    border-radius: 5px;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pill-item span {
+    font-size: 16px;
+    color: #333;
 }
 
 .pill-item button {
-    margin-left: 10px;
-    padding: 5px 10px;
-    font-size: 14px;
-}
-
-/* Výstrahy */
-.alert {
-    margin: 10px 0;
-    padding: 10px;
+    background: #ff6f00;
+    border: none;
     border-radius: 5px;
-    font-size: 14px;
+    padding: 5px 10px;
+    color: white;
+    cursor: pointer;
 }
 
-.alert-success {
-    background-color: #DFF0D8;
-    color: #3C763D;
+.pill-item button:hover {
+    background: #e65c00;
 }
 
-.alert-danger {
-    background-color: #F2DEDE;
-    color: #A94442;
+.icon {
+    display: inline-block;
+    margin-right: 10px;
+    color: #ff6f00;
+    font-size: 24px;
+}
+
+.error {
+    color: red;
+    text-align: center;
+}
+
+.success {
+    color: green;
+    text-align: center;
 }

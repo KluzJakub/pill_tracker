@@ -2,7 +2,7 @@ import React from 'react';
 
 function PillList({ pills, onDelete }) {
     return (
-        <ul className="list-group">
+        <ul className="list-group mt-4">
             {pills.map((pill) => (
                 <li
                     className="list-group-item d-flex justify-content-between align-items-center shadow-sm mb-2 rounded-pill"
